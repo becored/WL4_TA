@@ -1,1 +1,1 @@
-# WL4_TA
+# Wario Land 4: Time Attack Edition
