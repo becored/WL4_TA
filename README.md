@@ -1,4 +1,5 @@
 # Wario Land 4: Time Attack Edition
+This is a rom hack of Wario Land 4 for individual levels speedrun.  
 
 ## How to play
 Patch "WL4_TimeAttackEdition_v1.2.bps" to a vanilla Wario Land 4(US) rom  
