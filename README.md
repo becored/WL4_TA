@@ -3,7 +3,7 @@ This is a rom hack of Wario Land 4 for individual levels speedrun.
 ![pic01](images/pic01.png) ![pic02](images/pic02.png) ![pic03](images/pic03.png)
 
 ## How to play
-Patch "WL4_TimeAttackEdition_v1.2.bps" to a vanilla Wario Land 4(US) rom  
+Patch "WL4_TimeAttackEdition_v1.2.bps" to a vanilla Wario Land 4(US) rom.  
   
 ## Features
 - Timer is always on top-right of screen in level (replaced coin display)  
