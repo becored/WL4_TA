@@ -56,7 +56,6 @@
 #define APO_CHAR 0x869F888
 #define NUM_CHAR 0x869FC88
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_SeisanSavePatch() {
     // Vanilla code
     if (ucKagiGetFlg) {

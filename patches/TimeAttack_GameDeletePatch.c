@@ -19,7 +19,6 @@
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_GameDeletePatch() {
     // Vanilla code
     cNextFlg = sub_80928E4();

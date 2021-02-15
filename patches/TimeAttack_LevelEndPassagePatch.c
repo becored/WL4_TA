@@ -33,7 +33,6 @@
 #define sub_807E720 ((void (*)()) 0x807E721)
 #define sub_807D5C8 ((int (*)()) 0x807D5C9)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_LevelEndPassagePatch() {
     // Vanilla code
     if (unk_3003D54) {

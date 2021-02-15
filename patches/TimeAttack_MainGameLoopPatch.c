@@ -45,7 +45,6 @@
 #define APO_CHAR 0x8401CE8
 #define NUM_CHAR 0x8403AE8
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_MainGameLoopPatch() {
     // Vanilla code
     Sub_8000954_SetKeyPressWRAM();

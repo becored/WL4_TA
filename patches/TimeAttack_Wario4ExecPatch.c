@@ -29,7 +29,6 @@
 #define TEXT1_CHAR 0x87A0000
 #define TEXT2_CHAR 0x87A0200
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_Wario4ExecPatch() {
     // Vanilla code
     Sub_8005F1C_Wario4_Exec( usFadeTimer++ );

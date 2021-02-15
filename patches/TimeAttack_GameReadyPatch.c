@@ -38,7 +38,6 @@
 #define Sub_80917A8_GameReady ((int (*)()) 0x80917A9)
 #define Sub_8090A40_InitSelectSaveSlotScene ((void (*)()) 0x8090A41)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_GameReadyPatch() {
     // Custom code
     if (sGameSeq == 0) {

@@ -59,7 +59,7 @@
 // Subroutine
 #define sub_80845F0 ((int (*)()) 0x80845F1)
 #define sub_807A700 ((int (*)()) 0x807A701)
-#define sub_8001DA4_m4aSongNumStart ((int (*)(int)) 0x8001DA5)
+#define sub_8001DA4_m4aSongNumStart ((void (*)(int)) 0x8001DA5)
 
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
@@ -75,7 +75,6 @@
 #define NUM_CHAR 0x869FC88
 #define VLK_CHAR 0x869EE68
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_GameSelectMmapPatch() {
     // Vanilla code
     if (sub_80845F0() && sub_807A700()) {

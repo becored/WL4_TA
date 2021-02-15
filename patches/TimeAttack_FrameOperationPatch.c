@@ -78,7 +78,6 @@ Hook length: 38 Bytes
 #define APO_CHAR 0x8401CE8
 #define NUM_CHAR 0x8403AE8
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_FrameOperationPatch() {
     // Vanilla code for animated tiles loading
     if ( (GameState == 2 || GameState == 6 || GameState == 4 && unk_300001B == 1) && !unk_3000046 ) {

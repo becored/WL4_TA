@@ -33,7 +33,6 @@
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_PauseInitPatch() {
     // Custom code
     int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
