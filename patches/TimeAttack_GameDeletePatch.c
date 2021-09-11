@@ -9,6 +9,7 @@
 #define sGameSeq (*(volatile unsigned short*) 0x3000C3C)
 #define cNextFlg (*(volatile unsigned char*) 0x3000C3E)
 #define usFadeTimer (*(volatile unsigned short*) 0x300188E)
+#define ucDelete (*(volatile unsigned short*) 0x3004AB8)
 
 // I/O
 #define REG_BLDCNT (*(volatile unsigned short*) 0x4000050)
@@ -19,6 +20,7 @@
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
 
+__attribute__((no_caller_saved_registers))
 void TimeAttack_GameDeletePatch() {
     // Vanilla code
     cNextFlg = sub_80928E4();
@@ -28,13 +30,12 @@ void TimeAttack_GameDeletePatch() {
         if ( cNextFlg != 1 ) {
             REG_BLDCNT = 255;
         }
-    }
-
-    // Initialize best times
-    if ( cNextFlg ) {
-        for (int i = 0; i <= 432; i++) {
-            BestTimes[i] = 0;
+        // Custom code
+        // Initialize best times
+        if ( ucDelete == 3 ) {
+            for (int i = 0; i <= 432; i++) {
+                BestTimes[i] = 0;
+            }
         }
     }
-
 }

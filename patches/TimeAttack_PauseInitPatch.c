@@ -8,7 +8,7 @@
 #define VRAM 0x6000000
 #define APO_CHAR 0x869F888
 #define NUM_CHAR 0x869FC88
-#define VLK_CHAR 0x869EE68
+#define BLK_CHAR 0x869EE68
 
 // IRAM
 #define PassageID (*(volatile unsigned char*) 0x3000002)
@@ -32,45 +32,88 @@
 
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 
 void TimeAttack_PauseInitPatch() {
     // Custom code
-    int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
-    // Hidden best time
-    if (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
-        BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
-        BestTimes[i+4] == 0 && BestTimes[i+5] == 0) {
-        for(int i = 0; i < 6; i ++) {
-            REG_DMA3SAD = VLK_CHAR;
-            REG_DMA3DAD = (VRAM + 0x2A80 + (i * 0x20));
+    if (InPassageLevelID == 4) {
+        // Boss
+        int i = (PassageID * 6) + (CurrentDifficulty * 36);
+        // Hidden best time
+        if (BestTimes_Boss[i] == 0 && BestTimes_Boss[i+1] == 0 &&
+            BestTimes_Boss[i+2] == 0 && BestTimes_Boss[i+3] == 0 &&
+            BestTimes_Boss[i+4] == 0 && BestTimes_Boss[i+5] == 0) {
+            for(int i = 0; i < 6; i ++) {
+                REG_DMA3SAD = BLK_CHAR;
+                REG_DMA3DAD = (VRAM + 0x2A80 + (i * 0x20));
+                REG_DMA3CNT = 0x80000010;
+            }
+        // Visible best time
+        } else {
+            // Frames 1-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02B20);
+            REG_DMA3CNT = 0x80000010;
+            // Frames 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02B00);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes_Boss[i+2] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AE0);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+3] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AC0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes_Boss[i+4] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AA0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+5] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02A80);
             REG_DMA3CNT = 0x80000010;
         }
-    // Visible best time
     } else {
-        // Frames 1-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02B20);
-        REG_DMA3CNT = 0x80000010;
-        // Frames 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02B00);
-        REG_DMA3CNT = 0x80000010;
-        // Seconds 1-digit
-        REG_DMA3SAD = APO_CHAR + (BestTimes[i+2] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02AE0);
-        REG_DMA3CNT = 0x80000010;
-        // Seconds 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+3] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02AC0);
-        REG_DMA3CNT = 0x80000010;
-        // Minutes 1-digit
-        REG_DMA3SAD = APO_CHAR + (BestTimes[i+4] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02AA0);
-        REG_DMA3CNT = 0x80000010;
-        // Minutes 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+5] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02A80);
-        REG_DMA3CNT = 0x80000010;
+        // Level
+        int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
+        // Hidden best time
+        if (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
+            BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
+            BestTimes[i+4] == 0 && BestTimes[i+5] == 0) {
+            for(int i = 0; i < 6; i ++) {
+                REG_DMA3SAD = BLK_CHAR;
+                REG_DMA3DAD = (VRAM + 0x2A80 + (i * 0x20));
+                REG_DMA3CNT = 0x80000010;
+            }
+        // Visible best time
+        } else {
+            // Frames 1-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02B20);
+            REG_DMA3CNT = 0x80000010;
+            // Frames 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02B00);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes[i+2] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AE0);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+3] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AC0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes[i+4] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02AA0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+5] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02A80);
+            REG_DMA3CNT = 0x80000010;
+        }
     }
 
     // Vanilla code

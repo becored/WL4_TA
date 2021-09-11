@@ -22,7 +22,9 @@
 #define SecondDidit2 (*(volatile unsigned char*) 0x3006F14)
 #define MinuteDidit1 (*(volatile unsigned char*) 0x3006F15)
 #define MinuteDidit2 (*(volatile unsigned char*) 0x3006F16)
+#define UpdateTime (*(volatile unsigned char*) 0x3006F17)
 #define RetryFlag (*(volatile unsigned char*) 0x3006F18)
+#define MiscCounter (*(volatile unsigned char*) 0x3006F19)
 #define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
 #define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
 #define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
@@ -44,6 +46,7 @@ void TimeAttack_LevelEndPassagePatch() {
     // Custom code
     if (RetryFlag){
         // Initialize
+        CountFlag = 0;
         MaxFlag = 0;
         FrameDigit1 = 0;
         FrameDigit2 = 0;
@@ -51,7 +54,9 @@ void TimeAttack_LevelEndPassagePatch() {
         SecondDidit2 = 0;
         MinuteDidit1 = 0;
         MinuteDidit2 = 0;
+        UpdateTime = 0;
         RetryFlag = 0;
+        MiscCounter = 0;
 
         // Restore frog timer from backup
         cGmTime1 = cGmTimeBackup1;

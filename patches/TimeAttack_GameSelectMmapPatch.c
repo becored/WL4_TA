@@ -41,6 +41,9 @@
 #define SecondDidit2 (*(volatile unsigned char*) 0x3006F14)
 #define MinuteDidit1 (*(volatile unsigned char*) 0x3006F15)
 #define MinuteDidit2 (*(volatile unsigned char*) 0x3006F16)
+#define UpdateTime (*(volatile unsigned char*) 0x3006F17)
+#define RetryFlag (*(volatile unsigned char*) 0x3006F18)
+#define MiscCounter (*(volatile unsigned char*) 0x3006F19)
 #define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
 #define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
 #define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
@@ -59,10 +62,11 @@
 // Subroutine
 #define sub_80845F0 ((int (*)()) 0x80845F1)
 #define sub_807A700 ((int (*)()) 0x807A701)
-#define sub_8001DA4_m4aSongNumStart ((void (*)(int)) 0x8001DA5)
+#define sub_8001DA4_m4aSongNumStart ((int (*)(int)) 0x8001DA5)
 
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 
 // Char
 #define NORMAL1_CHAR 0x869EF88
@@ -73,7 +77,7 @@
 #define SHARD2_CHAR 0x869FA48
 #define APO_CHAR 0x869F888
 #define NUM_CHAR 0x869FC88
-#define VLK_CHAR 0x869EE68
+#define BLK_CHAR 0x869EE68
 
 void TimeAttack_GameSelectMmapPatch() {
     // Vanilla code
@@ -91,6 +95,8 @@ void TimeAttack_GameSelectMmapPatch() {
     SecondDidit2 = 0;
     MinuteDidit1 = 0;
     MinuteDidit2 = 0;
+    UpdateTime = 0;
+    MiscCounter = 0;
 
     // Frog timer backup for retry
     cGmTimeBackup1 = cGmTime1;
@@ -114,10 +120,10 @@ void TimeAttack_GameSelectMmapPatch() {
 
     // Difficulty VRAM
     if (CurrentDifficulty == 1) {
-        REG_DMA3SAD = VLK_CHAR;
+        REG_DMA3SAD = BLK_CHAR;
         REG_DMA3DAD = (VRAM + 0x2980);
         REG_DMA3CNT = 0x80000020;
-        REG_DMA3SAD = VLK_CHAR;
+        REG_DMA3SAD = BLK_CHAR;
         REG_DMA3DAD = (VRAM + 0x2D80);
         REG_DMA3CNT = 0x80000020;
         REG_DMA3SAD = HARD1_CHAR;
@@ -134,10 +140,10 @@ void TimeAttack_GameSelectMmapPatch() {
         REG_DMA3DAD = (VRAM + 0x2D80);
         REG_DMA3CNT = 0x80000060;
     } else {
-        REG_DMA3SAD = VLK_CHAR;
+        REG_DMA3SAD = BLK_CHAR;
         REG_DMA3DAD = (VRAM + 0x2980);
         REG_DMA3CNT = 0x80000010;
-        REG_DMA3SAD = VLK_CHAR;
+        REG_DMA3SAD = BLK_CHAR;
         REG_DMA3DAD = (VRAM + 0x2D80);
         REG_DMA3CNT = 0x80000010;
         REG_DMA3SAD = NORMAL1_CHAR;
@@ -149,42 +155,85 @@ void TimeAttack_GameSelectMmapPatch() {
     }
 
     // Best time VRAM
-    int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
-    // Hidden best time
-    if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID > 3 ||
-        (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
-        BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
-        BestTimes[i+4] == 0 && BestTimes[i+5] == 0)) {
-        for(int i = 0; i < 6; i ++) {
-            REG_DMA3SAD = VLK_CHAR;
-            REG_DMA3DAD = (VRAM + 0x26A0 + (i * 0x20));
+    if (InPassageLevelID == 4) {
+        // Boss
+        int i = (PassageID * 6) + (CurrentDifficulty * 36);
+        // Hidden best time
+        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5 ||
+            (BestTimes_Boss[i] == 0 && BestTimes_Boss[i+1] == 0 &&
+            BestTimes_Boss[i+2] == 0 && BestTimes_Boss[i+3] == 0 &&
+            BestTimes_Boss[i+4] == 0 && BestTimes_Boss[i+5] == 0)) {
+            for (int i = 0; i < 6; i ++) {
+                REG_DMA3SAD = BLK_CHAR;
+                REG_DMA3DAD = (VRAM + 0x26A0 + (i * 0x20));
+                REG_DMA3CNT = 0x80000010;
+            }
+        // Visible best time
+        } else {
+            // Frames 1-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02740);
+            REG_DMA3CNT = 0x80000010;
+            // Frames 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02720);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes_Boss[i+2] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02700);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+3] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026E0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes_Boss[i+4] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026C0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+5] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026A0);
             REG_DMA3CNT = 0x80000010;
         }
-    // Visible best time
     } else {
-        // Frames 1-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02740);
-        REG_DMA3CNT = 0x80000010;
-        // Frames 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02720);
-        REG_DMA3CNT = 0x80000010;
-        // Seconds 1-digit
-        REG_DMA3SAD = APO_CHAR + (BestTimes[i+2] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x02700);
-        REG_DMA3CNT = 0x80000010;
-        // Seconds 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+3] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x026E0);
-        REG_DMA3CNT = 0x80000010;
-        // Minutes 1-digit
-        REG_DMA3SAD = APO_CHAR + (BestTimes[i+4] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x026C0);
-        REG_DMA3CNT = 0x80000010;
-        // Minutes 2-digit
-        REG_DMA3SAD = NUM_CHAR + (BestTimes[i+5] * 0x20);
-        REG_DMA3DAD = (VRAM + 0x026A0);
-        REG_DMA3CNT = 0x80000010;
+        // Level
+        int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
+        // Hidden best time
+        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5 ||
+            (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
+            BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
+            BestTimes[i+4] == 0 && BestTimes[i+5] == 0)) {
+            for (int i = 0; i < 6; i ++) {
+                REG_DMA3SAD = BLK_CHAR;
+                REG_DMA3DAD = (VRAM + 0x26A0 + (i * 0x20));
+                REG_DMA3CNT = 0x80000010;
+            }
+        // Visible best time
+        } else {
+            // Frames 1-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02740);
+            REG_DMA3CNT = 0x80000010;
+            // Frames 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02720);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes[i+2] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x02700);
+            REG_DMA3CNT = 0x80000010;
+            // Seconds 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+3] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026E0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 1-digit
+            REG_DMA3SAD = APO_CHAR + (BestTimes[i+4] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026C0);
+            REG_DMA3CNT = 0x80000010;
+            // Minutes 2-digit
+            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+5] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x026A0);
+            REG_DMA3CNT = 0x80000010;
+        }
     }
 }

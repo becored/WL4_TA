@@ -24,16 +24,26 @@ count:                                     ^14                                  
 Hook length: 38 Bytes
 */
 
-#define GameState (*(volatile unsigned char*) 0x3000C3C)
+#define PassageID (*(volatile unsigned char*) 0x3000002)
+#define InPassageLevelID (*(volatile unsigned char*) 0x3000003)
+#define CurrentDifficulty (*(volatile unsigned char*) 0x03000017) // 00 for normal, =01 for hard, =02 for S-hard
 #define unk_300001B (*(volatile unsigned char*) 0x300001B)
+#define ucGmapSubSeq (*(volatile unsigned char*) 0x3000021)
+#define CurrentRoomId (*(volatile unsigned char*) 0x3000024)
+#define ucGateNum (*(volatile unsigned char*) 0x3000025)
 #define unk_3000046 (*(volatile unsigned char*) 0x3000046)
+#define ucSTEndType (*(volatile unsigned char*) 0x3000048)
 #define sub_806E08C ((void (*)()) 0x806E08D)
 
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
 #define soft_reset (*(volatile unsigned char*) 0x300001E)
-#define ucDokan (*(volatile unsigned char*) 0x300189A)
+#define W4ItemStatus ((volatile unsigned char*) 0x3000A68)
 #define inVortex (*(volatile unsigned char*) 0x3000C0E)
+#define GlobalGameMode (*(volatile unsigned char*) 0x3000C3A)
+#define GameState (*(volatile unsigned char*) 0x3000C3C)
+#define ucDokan (*(volatile unsigned char*) 0x300189A)
+#define WarioHeart (*(volatile unsigned char*) 0x3001910)
 #define usWarStopFlg (*(volatile unsigned char*) 0x30019F6)
 
 #define ADDR_KEY_4 (*(volatile unsigned short*) 0x3001848)
@@ -52,6 +62,7 @@ Hook length: 38 Bytes
 #define	KEY_ALL		0x3FF // Any key
 
 // IRAM
+#define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 #define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
 #define FrameDigit2 (*(volatile unsigned char*) 0x3006F12)
@@ -59,6 +70,12 @@ Hook length: 38 Bytes
 #define SecondDidit2 (*(volatile unsigned char*) 0x3006F14)
 #define MinuteDidit1 (*(volatile unsigned char*) 0x3006F15)
 #define MinuteDidit2 (*(volatile unsigned char*) 0x3006F16)
+#define UpdateTime (*(volatile unsigned char*) 0x3006F17)
+#define RetryFlag (*(volatile unsigned char*) 0x3006F18)
+#define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
+#define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
+#define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
 
 // I/O
 #define REG_DMA3SAD (*(volatile unsigned int*) 0x40000D4)
@@ -73,6 +90,7 @@ Hook length: 38 Bytes
 
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000E00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 
 // Char
 #define APO_CHAR 0x8401CE8
@@ -85,8 +103,59 @@ void TimeAttack_FrameOperationPatch() {
     }
 
     // Custom code
+    if (InPassageLevelID == 4) {
+        // Skip boss corridor
+        if (GlobalGameMode == 2 && GameState == 1 && CurrentRoomId == 0) {
+            ucGmapSubSeq = 0x08;
+            ucGateNum = 0x02;
+            ucSTEndType = 0x80;
+            GameState = 0x06;
+        }
+        // Skip boss outro
+        if (ucSTEndType == 5 && CurrentRoomId == 1) {
+            ucSTEndType = 6;
+        }
+    }
+
+    // Stop timer when defeating boss
+    if (InPassageLevelID == 6) {
+        int i = (PassageID * 6) + (CurrentDifficulty * 36);
+        if (FrameDigit1+(FrameDigit2*10)+(SecondDidit1*100)+(SecondDidit2*1000)+(MinuteDidit1*10000)+(MinuteDidit2*100000) <
+            BestTimes_Boss[i]+(BestTimes_Boss[i+1]*10)+(BestTimes_Boss[i+2]*100)+(BestTimes_Boss[i+3]*1000)+(BestTimes_Boss[i+4]*10000)+(BestTimes_Boss[i+5]*100000)) {
+            BestTimes_Boss[i] = FrameDigit1;
+            BestTimes_Boss[i+1] = FrameDigit2;
+            BestTimes_Boss[i+2] = SecondDidit1;
+            BestTimes_Boss[i+3] = SecondDidit2;
+            BestTimes_Boss[i+4] = MinuteDidit1;
+            BestTimes_Boss[i+5] = MinuteDidit2;
+            UpdateTime = 6;
+        } else if (BestTimes_Boss[i] == 0 && BestTimes_Boss[i+1] == 0 &&
+                   BestTimes_Boss[i+2] == 0 && BestTimes_Boss[i+3] == 0 &&
+                   BestTimes_Boss[i+4] == 0 && BestTimes_Boss[i+5] == 0) {
+            BestTimes_Boss[i] = FrameDigit1;
+            BestTimes_Boss[i+1] = FrameDigit2;
+            BestTimes_Boss[i+2] = SecondDidit1;
+            BestTimes_Boss[i+3] = SecondDidit2;
+            BestTimes_Boss[i+4] = MinuteDidit1;
+            BestTimes_Boss[i+5] = MinuteDidit2;
+            UpdateTime = 6;
+        }
+        CountFlag = 0;
+        InPassageLevelID = 4;
+        // Unlock levels
+        for (int i = 16; i < 140; i += 24) {
+            // Boss
+            W4ItemStatus[i] = 0x07;
+        }
+    }
+
+    // Stop timer when Wario dies
+    if (WarioHeart == 0) {
+        CountFlag = 0;
+    }
+
+    /*
     if (cGmStartFlg == 1 && cPauseFlag == 0 && soft_reset == 0) {
-        /*
         // Press L to trigger debug mode
         if (ADDR_KEY_4 == KEY_L) {
             if (GameState == 8) {
@@ -95,42 +164,6 @@ void TimeAttack_FrameOperationPatch() {
                 GameState = 8;
             }
         }
-        */
-
-        if (inVortex) {
-            CountFlag = 0;
-        } else {
-            CountFlag = 1;
-        }
-
-        // Frames 1-digit
-        REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x11120);
-        REG_DMA3CNT = 0x80000010;
-
-        // Frames 2-digit
-        REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x11100);
-        REG_DMA3CNT = 0x80000010;
-
-        // Seconds 1-digit
-        REG_DMA3SAD = APO_CHAR + (SecondDidit1 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x110E0);
-        REG_DMA3CNT = 0x80000010;
-
-        // Seconds 2-digit
-        REG_DMA3SAD = NUM_CHAR + (SecondDidit2 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x110C0);
-        REG_DMA3CNT = 0x80000010;
-
-        // Minutes 1-digit
-        REG_DMA3SAD = APO_CHAR + (MinuteDidit1 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x110A0);
-        REG_DMA3CNT = 0x80000010;
-
-        // Minutes 2-digit
-        REG_DMA3SAD = NUM_CHAR + (MinuteDidit2 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x11080);
-        REG_DMA3CNT = 0x80000010;
     }
+    */
 }

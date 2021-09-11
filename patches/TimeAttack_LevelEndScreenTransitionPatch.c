@@ -23,9 +23,10 @@
 #define RetryFlag (*(volatile unsigned char*) 0x3006F18)
 
 // Subroutine
-#define sub_8001DA4_m4aSongNumStart ((void (*)(int)) 0x8001DA5)
+#define Sub_8001DA4_m4aSongNumStart ((int (*)(int)) 0x8001DA5)
 #define sub_807CADC ((void (*)()) 0x807CADD)
 
+__attribute__((no_caller_saved_registers))
 void TimeAttack_LevelEndScreenTransitionPatch() {
     // Vanilla code
     /*

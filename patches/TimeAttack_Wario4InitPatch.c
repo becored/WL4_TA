@@ -45,8 +45,13 @@ void TimeAttack_Wario4InitPatch() {
         unk_20382E2_SAVE = 0x06;
     }
     // Unlock levels
-    for (int i = 0; i < 144; i += 4) {
+    for (int i = 0; i < 140; i += 4) {
+        // Levels
         W4ItemStatus_SAVE[i] = 0x3F;
+    }
+    for (int i = 16; i < 140; i += 24) {
+        // Boss
+        W4ItemStatus_SAVE[i] = 0x07;
     }
 
     // Vanilla code

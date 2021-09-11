@@ -48,9 +48,16 @@
 #define SecondDidit2 (*(volatile unsigned char*) 0x3006F14)
 #define MinuteDidit1 (*(volatile unsigned char*) 0x3006F15)
 #define MinuteDidit2 (*(volatile unsigned char*) 0x3006F16)
+#define UpdateTime (*(volatile unsigned char*) 0x3006F17)
+#define RetryFlag (*(volatile unsigned char*) 0x3006F18)
+#define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
+#define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
+#define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
 
 // SRAM
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 
 // Char
 #define APO_CHAR 0x869F888
@@ -73,6 +80,7 @@ void TimeAttack_SeisanSavePatch() {
             BestTimes[i+3] = SecondDidit2;
             BestTimes[i+4] = MinuteDidit1;
             BestTimes[i+5] = MinuteDidit2;
+            UpdateTime = 6;
         } else if (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
                    BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
                    BestTimes[i+4] == 0 && BestTimes[i+5] == 0) {
@@ -82,6 +90,7 @@ void TimeAttack_SeisanSavePatch() {
             BestTimes[i+3] = SecondDidit2;
             BestTimes[i+4] = MinuteDidit1;
             BestTimes[i+5] = MinuteDidit2;
+            UpdateTime = 6;
         }
     }
     ucKagiGetFlg = 0; // Remove Keyzer flag for correct level escape cutscene
