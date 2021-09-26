@@ -28,7 +28,13 @@
 #define MapTexts1 ((volatile unsigned short*) 0x6008304)
 #define MapTexts2 ((volatile unsigned short*) 0x6008344)
 
-// Data
+// SRAM
+#define LastDifficulty (*(volatile unsigned char*) 0xE0009F0)
+#define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
+#define LapTimes ((volatile unsigned char*) 0xE000C10)
+
+// Char
 #define TEXT1_CHAR 0x87A0000
 #define TEXT2_CHAR 0x87A0200
 

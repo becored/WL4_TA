@@ -25,9 +25,17 @@
 #define UpdateTime (*(volatile unsigned char*) 0x3006F17)
 #define RetryFlag (*(volatile unsigned char*) 0x3006F18)
 #define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define LockTimer (*(volatile unsigned char*) 0x3006F1A)
+#define ItemNum (*(volatile unsigned char*) 0x3006F1B)
 #define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
 #define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
 #define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
+#define LapTemps1 ((volatile unsigned char*) 0x3006F30) // 30-35
+#define LapTemps2 ((volatile unsigned char*) 0x3006F36) // 36-3B
+#define LapTemps3 ((volatile unsigned char*) 0x3006F3C) // 3C-41
+#define LapTemps4 ((volatile unsigned char*) 0x3006F42) // 42-47
+#define LapTemps5 ((volatile unsigned char*) 0x3006F48) // 48-4D
+#define DeltaTime ((volatile unsigned char*) 0x3006F4E) // 4E-54
 
 // Subroutine
 #define sub_807E768 ((void (*)()) 0x807E769)
@@ -57,6 +65,23 @@ void TimeAttack_LevelEndPassagePatch() {
         UpdateTime = 0;
         RetryFlag = 0;
         MiscCounter = 0;
+        LockTimer = 0;
+        ItemNum = 0;
+        for (int i = 0; i < 6; i ++) {
+            LapTemps1[i] = 0;
+        }
+        for (int i = 0; i < 6; i ++) {
+            LapTemps2[i] = 0;
+        }
+        for (int i = 0; i < 6; i ++) {
+            LapTemps3[i] = 0;
+        }
+        for (int i = 0; i < 6; i ++) {
+            LapTemps4[i] = 0;
+        }
+        for (int i = 0; i < 6; i ++) {
+            LapTemps5[i] = 0;
+        }
 
         // Restore frog timer from backup
         cGmTime1 = cGmTimeBackup1;

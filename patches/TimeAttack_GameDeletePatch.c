@@ -18,7 +18,10 @@
 #define sub_80928E4 ((int (*)()) 0x80928E5)
 
 // SRAM
+#define LastDifficulty (*(volatile unsigned char*) 0xE0009F0)
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
+#define LapTimes ((volatile unsigned char*) 0xE000C10)
 
 __attribute__((no_caller_saved_registers))
 void TimeAttack_GameDeletePatch() {
@@ -32,10 +35,13 @@ void TimeAttack_GameDeletePatch() {
         }
         // Custom code
         // Initialize best times
+        /*
         if ( ucDelete == 3 ) {
+            LastDifficulty = 0;
             for (int i = 0; i <= 432; i++) {
                 BestTimes[i] = 0;
             }
         }
+        */
     }
 }

@@ -1,5 +1,5 @@
-// @Description TimeAttack_Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face
-// @HookAddress 0x78EBB0
+// @Description TimeAttack_Sub_802A028_EntityAI_0x87_Tmain_takara_kakera2
+// @HookAddress 0x78EA1C
 // @HookString P
 // Made by beco
 // Verison 1.0
@@ -699,64 +699,100 @@ struct EnemyDataStructure {
     unsigned char CurEnemy_padding;
 };
 
+#define PassageID (*(volatile unsigned char*) 0x3000002)
+#define InPassageLevelID (*(volatile unsigned char*) 0x3000003)
+#define CurrentDifficulty (*(volatile unsigned char*) 0x03000017) // 00 for normal, =01 for hard, =02 for S-hard
 #define ucBossPause (*(volatile unsigned char*) 0x300001A)
 #define soft_reset (*(volatile unsigned char*) 0x300001E)
-#define usAlpfaBLD1 (*(volatile unsigned char*) 0x300002A)
-#define usAlpfaBLD2 (*(volatile unsigned char*) 0x300002B)
+#define CurrentRoomId (*(volatile unsigned char*) 0x3000024)
+#define ucGateNum (*(volatile unsigned char*) 0x3000025)
 #define Switch1Flag (*(volatile unsigned char*) 0x300002F)
 #define Switch2Flag (*(volatile unsigned char*) 0x3000030)
 #define Switch3Flag (*(volatile unsigned char*) 0x3000031)
 #define Switch4Flag (*(volatile unsigned char*) 0x3000032)
-#define ucBgDiva (*(volatile unsigned char*) 0x3000045)
 #define ucTimeUp (*(volatile unsigned char*) 0x3000047) // 01(fighting boss) 02(Losing coins) 03(Losing coins without coin counter) 04(hide coin counter) 10(fade to grayscale) 0f(no interaction between wario and enemies)
-#define CCobj_ucDat (*(volatile unsigned char*) 0x30000F7)
-#define unk_3000104 (*(volatile unsigned char*) 0x3000104)
-#define unk_3000160 (*(volatile unsigned char*) 0x3000160)
-#define unk_3000161 (*(volatile unsigned char*) 0x3000161)
-#define unk_3000188 (*(volatile unsigned char*) 0x3000188)
-#define unk_30001FC (*(volatile unsigned char*) 0x30001FC)
-#define unk_3000207 (*(volatile unsigned char*) 0x3000207)
+#define ucSTEndType (*(volatile unsigned char*) 0x3000048)
 #define CurrentEnemyData (*(volatile struct EnemyDataStructure*) 0x3000A24)
-#define ucBWork0 (*(volatile unsigned char*) 0x3000A58)
-#define unk_3000A64 (*(volatile unsigned char*) 0x3000A64)
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
-#define usWarStopFlg (*(volatile unsigned short*) 0x30019F6)
+#define W4ItemStatus ((volatile unsigned char*) 0x3000A68)
+#define inVortex (*(volatile unsigned char*) 0x3000C0E)
+#define GlobalGameMode (*(volatile unsigned char*) 0x3000C3A)
+#define GameState (*(volatile unsigned char*) 0x3000C3C)
+#define ucDokan (*(volatile unsigned char*) 0x300189A)
+#define WarioHeart (*(volatile unsigned char*) 0x3001910)
+#define usWarStopFlg (*(volatile unsigned char*) 0x30019F6)
+
+#define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
+#define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
+#define FrameDigit2 (*(volatile unsigned char*) 0x3006F12)
+#define SecondDidit1 (*(volatile unsigned char*) 0x3006F13)
+#define SecondDidit2 (*(volatile unsigned char*) 0x3006F14)
+#define MinuteDidit1 (*(volatile unsigned char*) 0x3006F15)
+#define MinuteDidit2 (*(volatile unsigned char*) 0x3006F16)
+#define UpdateTime (*(volatile unsigned char*) 0x3006F17)
+#define RetryFlag (*(volatile unsigned char*) 0x3006F18)
+#define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define LockTimer (*(volatile unsigned char*) 0x3006F1A)
+#define ItemNum (*(volatile unsigned char*) 0x3006F1B)
+#define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
+#define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
+#define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
+#define LapTemps1 ((volatile unsigned char*) 0x3006F30) // 30-35
+#define LapTemps2 ((volatile unsigned char*) 0x3006F36) // 36-3B
+#define LapTemps3 ((volatile unsigned char*) 0x3006F3C) // 3C-41
+#define LapTemps4 ((volatile unsigned char*) 0x3006F42) // 42-47
+#define LapTemps5 ((volatile unsigned char*) 0x3006F48) // 48-4D
+#define DeltaTime ((volatile unsigned char*) 0x3006F4E) // 4E-54
 
-#define Sub_8000A3C_FixMul ((signed short (*)(signed short, signed short)) 0x8000A3D)
-#define Sub_8000A6C_FixInverse ((signed short (*)(signed short)) 0x8000A6D)
+#define REG_DMA3SAD (*(volatile unsigned int*) 0x40000D4)
+#define REG_DMA3DAD (*(volatile unsigned int*) 0x40000D8)
+#define REG_DMA3CNT (*(volatile unsigned int*) 0x40000DC)
+#define PAL_TIMER (*(volatile unsigned short*) 0x500028C) // PAL RAM
+
 #define Sub_8001DA4_m4aSongNumStart ((void (*)(int)) 0x8001DA5)
-#define Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face ((void (*)()) 0x8067A65)
-#define EntityCollision ((int (*)(int, int)) 0x8026211)
+#define Sub_802A028_EntityAI_0x87_Tmain_takara_kakera2 ((void (*)()) 0x802A029)
 
-#define sin_cos_table ((signed short*) 0x8095138)
+// SRAM
+#define BestTimes ((volatile unsigned char*) 0xE000A00)
+#define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
+#define LapTimes ((volatile unsigned char*) 0xE000C10)
 
-void TimeAttack_Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face() {
+void TimeAttack_Sub_802A028_EntityAI_0x87_Tmain_takara_kakera2() {
     // Custom code
-    switch (CurrentEnemyData.CurEnemy_CurrentAnimationId) {
-        case Q_T_AUX_0:
-            CurrentEnemyData.CurEnemy_YPos = 0x04E0; // diva y position
-            ucBgDiva = 0x03; // light ray fix
-            unk_3000104 = 0x00; // post cat scene state
-            /*
-            unk_3000160 = 0xF4; // fan hand fix 1
-            unk_3000161 = 0xF2; // fan hand fix 2
-            unk_3000188 = 0x1B; // fan fix
-            unk_3000A64 = 0xBF; // fast heads
-            */
-            CurrentEnemyData.CurEnemy_TWork0 = 0x01;
-            CurrentEnemyData.CurEnemy_TWork1 = 0x0C;
-            CurrentEnemyData.CurEnemy_TWork2 = 0x04;
-            CurrentEnemyData.CurEnemy_TWork3 = 0x04;
-            CurrentEnemyData.CurEnemy_CurrentAnimationId = T_AUX_1;
-            break;
-        default:
-            if (!usWarStopFlg && ucTimeUp == 1 && CurrentEnemyData.CurEnemy_Life > 0 && CountFlag == 0){
-                CountFlag = 1;
-            }
-            break;
+    if (CurrentEnemyData.CurEnemy_CurrentAnimationId == Q_K5_HIP) {
+        int n = (ItemNum * 6);
+        LapTemps1[ItemNum*6] = FrameDigit1;
+        LapTemps1[(ItemNum*6)+1] = FrameDigit2;
+        LapTemps1[(ItemNum*6)+2] = SecondDidit1;
+        LapTemps1[(ItemNum*6)+3] = SecondDidit2;
+        LapTemps1[(ItemNum*6)+4] = MinuteDidit1;
+        LapTemps1[(ItemNum*6)+5] = MinuteDidit2;
+
+        DeltaTime[0] = FrameDigit1;
+        DeltaTime[1] = FrameDigit2;
+        DeltaTime[2] = SecondDidit1;
+        DeltaTime[3] = SecondDidit2;
+        DeltaTime[4] = MinuteDidit1;
+        DeltaTime[5] = MinuteDidit2;
+
+        int i = (ItemNum * 6) + (InPassageLevelID * 30) + (PassageID * 120) + (CurrentDifficulty * 720);
+        if (FrameDigit1+(FrameDigit2*10)+(SecondDidit1*100)+(SecondDidit2*1000)+(MinuteDidit1*10000)+(MinuteDidit2*100000) <
+            LapTimes[i]+(LapTimes[i+1]*10)+(LapTimes[i+2]*100)+(LapTimes[i+3]*1000)+(LapTimes[i+4]*10000)+(LapTimes[i+5]*100000)) {
+            UpdateTime = 15;
+            LockTimer = 0xFF;
+        } else if (LapTimes[i] == 0 && LapTimes[i+1] == 0 &&
+                   LapTimes[i+2] == 0 && LapTimes[i+3] == 0 &&
+                   LapTimes[i+4] == 0 && LapTimes[i+5] == 0) {
+            UpdateTime = 15;
+            LockTimer = 0xFF;
+        } else {
+            LockTimer = 0x50;
+        }
+        ItemNum ++;
     }
+
     // Vanilla code
-    Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face();
+    Sub_802A028_EntityAI_0x87_Tmain_takara_kakera2();
 }

@@ -84,13 +84,16 @@ Hook length: 38 Bytes
 
 // VRAM
 #define PAL_RAM ((volatile unsigned char*) 0x5000000) // PAL RAM
+#define PAL_TIMER (*(volatile unsigned char*) 0x500028C)
+#define PAL_TIMER_BOSS (*(volatile unsigned char*) 0x50002EA)
 #define VRAM 0x6000000 // VRAM
 #define OBJ_MODE0_VRAM 0x6010000 // OBJ Character RAM
 #define OAM 0x7000000 // OAM
 
 // SRAM
-#define BestTimes ((volatile unsigned char*) 0xE000E00)
+#define BestTimes ((volatile unsigned char*) 0xE000A00)
 #define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
+#define LapTimes ((volatile unsigned char*) 0xE000C10)
 
 // Char
 #define APO_CHAR 0x8401CE8
@@ -128,7 +131,7 @@ void TimeAttack_FrameOperationPatch() {
             BestTimes_Boss[i+3] = SecondDidit2;
             BestTimes_Boss[i+4] = MinuteDidit1;
             BestTimes_Boss[i+5] = MinuteDidit2;
-            UpdateTime = 6;
+            UpdateTime = 15;
         } else if (BestTimes_Boss[i] == 0 && BestTimes_Boss[i+1] == 0 &&
                    BestTimes_Boss[i+2] == 0 && BestTimes_Boss[i+3] == 0 &&
                    BestTimes_Boss[i+4] == 0 && BestTimes_Boss[i+5] == 0) {
@@ -138,7 +141,7 @@ void TimeAttack_FrameOperationPatch() {
             BestTimes_Boss[i+3] = SecondDidit2;
             BestTimes_Boss[i+4] = MinuteDidit1;
             BestTimes_Boss[i+5] = MinuteDidit2;
-            UpdateTime = 6;
+            UpdateTime = 15;
         }
         CountFlag = 0;
         InPassageLevelID = 4;

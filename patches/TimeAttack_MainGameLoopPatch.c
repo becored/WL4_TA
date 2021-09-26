@@ -32,9 +32,16 @@
 #define UpdateTime (*(volatile unsigned char*) 0x3006F17)
 #define RetryFlag (*(volatile unsigned char*) 0x3006F18)
 #define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define LockTimer (*(volatile unsigned char*) 0x3006F1A)
 #define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
 #define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
 #define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
+#define LapTemps1 ((volatile unsigned char*) 0x3006F30) // 30-35
+#define LapTemps2 ((volatile unsigned char*) 0x3006F36) // 36-3B
+#define LapTemps3 ((volatile unsigned char*) 0x3006F3C) // 3C-41
+#define LapTemps4 ((volatile unsigned char*) 0x3006F42) // 42-47
+#define LapTemps5 ((volatile unsigned char*) 0x3006F48) // 48-4D
+#define DeltaTime ((volatile unsigned char*) 0x3006F4E) // 4E-54
 
 // I/O
 #define REG_DMA3SAD (*(volatile unsigned int*) 0x40000D4)
@@ -42,6 +49,7 @@
 #define REG_DMA3CNT (*(volatile unsigned int*) 0x40000DC)
 
 // VRAM
+#define PAL_TIMER (*(volatile unsigned short*) 0x500028C) // PAL RAM
 #define VRAM 0x6000000 // VRAM
 
 // Subroutine
@@ -99,10 +107,15 @@ void TimeAttack_MainGameLoopPatch() {
     }
 
     if (UpdateTime > 0) {
-        if (++MiscCounter >= 24){
-            UpdateTime--;
+        if (++MiscCounter >= 8) {
+            if (--UpdateTime == 0) {
+                UpdateTime = 0;
+                LockTimer = 0;
+            }
             MiscCounter = 0;
         }
+    } else if (LockTimer > 0) {
+        LockTimer--;
     }
 
     // Pause menu
@@ -169,10 +182,11 @@ void TimeAttack_MainGameLoopPatch() {
                 REG_DMA3CNT = 0x80000010;
             } else {
                 // Clock icon
-                REG_DMA3SAD = BLK_CHAR;
+                REG_DMA3SAD = B_CLK_CHAR;
                 REG_DMA3DAD = (VRAM + 0x11600);
                 REG_DMA3CNT = 0x80000010;
                 // Blank
+                REG_DMA3SAD = BLK_CHAR;
                 REG_DMA3DAD = (VRAM + 0x116E0);
                 REG_DMA3CNT = 0x80000010;
                 // Frames 1-digit
@@ -196,51 +210,100 @@ void TimeAttack_MainGameLoopPatch() {
             }
         } else {
             // Level
-            if (UpdateTime % 2 == 0) {
-                // Frames 1-digit
-                REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x11120);
-                REG_DMA3CNT = 0x80000010;
-                // Frames 2-digit
-                REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x11100);
-                REG_DMA3CNT = 0x80000010;
-                // Seconds 1-digit
-                REG_DMA3SAD = APO_CHAR + (SecondDidit1 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x110E0);
-                REG_DMA3CNT = 0x80000010;
-                // Seconds 2-digit
-                REG_DMA3SAD = NUM_CHAR + (SecondDidit2 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x110C0);
-                REG_DMA3CNT = 0x80000010;
-                // Minutes 1-digit
-                REG_DMA3SAD = APO_CHAR + (MinuteDidit1 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x110A0);
-                REG_DMA3CNT = 0x80000010;
-                // Minutes 2-digit
-                REG_DMA3SAD = NUM_CHAR + (MinuteDidit2 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x11080);
-                REG_DMA3CNT = 0x80000010;
+            if (LockTimer == 0) {
+                if (UpdateTime % 2 == 0) {
+                    // Frames 1-digit
+                    REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11120);
+                    REG_DMA3CNT = 0x80000010;
+                    // Frames 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11100);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 1-digit
+                    REG_DMA3SAD = APO_CHAR + (SecondDidit1 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110E0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (SecondDidit2 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 1-digit
+                    REG_DMA3SAD = APO_CHAR + (MinuteDidit1 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110A0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (MinuteDidit2 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11080);
+                    REG_DMA3CNT = 0x80000010;
+                } else {
+                    // Frames 1-digit
+                    REG_DMA3SAD = BLK_CHAR;
+                    REG_DMA3DAD = (VRAM + 0x11120);
+                    REG_DMA3CNT = 0x80000010;
+                    // Frames 2-digit
+                    REG_DMA3DAD = (VRAM + 0x11100);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 1-digit
+                    REG_DMA3DAD = (VRAM + 0x110E0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 2-digit
+                    REG_DMA3DAD = (VRAM + 0x110C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 1-digit
+                    REG_DMA3DAD = (VRAM + 0x110A0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 2-digit
+                    REG_DMA3DAD = (VRAM + 0x11080);
+                    REG_DMA3CNT = 0x80000010;
+                }
             } else {
-                // Frames 1-digit
-                REG_DMA3SAD = BLK_CHAR;
-                REG_DMA3DAD = (VRAM + 0x11120);
-                REG_DMA3CNT = 0x80000010;
-                // Frames 2-digit
-                REG_DMA3DAD = (VRAM + 0x11100);
-                REG_DMA3CNT = 0x80000010;
-                // Seconds 1-digit
-                REG_DMA3DAD = (VRAM + 0x110E0);
-                REG_DMA3CNT = 0x80000010;
-                // Seconds 2-digit
-                REG_DMA3DAD = (VRAM + 0x110C0);
-                REG_DMA3CNT = 0x80000010;
-                // Minutes 1-digit
-                REG_DMA3DAD = (VRAM + 0x110A0);
-                REG_DMA3CNT = 0x80000010;
-                // Minutes 2-digit
-                REG_DMA3DAD = (VRAM + 0x11080);
-                REG_DMA3CNT = 0x80000010;
+                if (UpdateTime % 2 == 0) {
+                    // Frames 1-digit
+                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[0] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11120);
+                    REG_DMA3CNT = 0x80000010;
+                    // Frames 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[1] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11100);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 1-digit
+                    REG_DMA3SAD = APO_CHAR + (DeltaTime[2] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110E0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[3] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 1-digit
+                    REG_DMA3SAD = APO_CHAR + (DeltaTime[4] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x110A0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 2-digit
+                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[5] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x11080);
+                    REG_DMA3CNT = 0x80000010;
+                } else {
+                    // Frames 1-digit
+                    REG_DMA3SAD = BLK_CHAR;
+                    REG_DMA3DAD = (VRAM + 0x11120);
+                    REG_DMA3CNT = 0x80000010;
+                    // Frames 2-digit
+                    REG_DMA3DAD = (VRAM + 0x11100);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 1-digit
+                    REG_DMA3DAD = (VRAM + 0x110E0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Seconds 2-digit
+                    REG_DMA3DAD = (VRAM + 0x110C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 1-digit
+                    REG_DMA3DAD = (VRAM + 0x110A0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Minutes 2-digit
+                    REG_DMA3DAD = (VRAM + 0x11080);
+                    REG_DMA3CNT = 0x80000010;
+                }
             }
         }
     }
