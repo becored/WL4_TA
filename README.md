@@ -26,6 +26,3 @@ Download "Wario_Land_4_TimeAttack_Edition_ver1.3.zip" from Assets.
 Special thanks to:  
 - mpu  
 - WL4Editor developers  
-  
-## ToDo  
-- Support boss levels  
