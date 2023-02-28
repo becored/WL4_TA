@@ -6,7 +6,7 @@ This is a rom hack of Wario Land 4 for individual levels speedrun.
 Patch "WL4_TimeAttackEdition_v1.5.bps" to a vanilla Wario Land 4(US) rom.  
   
 ## Features  
-- Timer is always on top-right of screen in level (replaced coin display,counts up to 99 minutes, 59 seconds, 59 frames)  
+- Timer is always on top-right of screen in level (replaced coin display, counts up to 99 minutes, 59 seconds, 59 frames)  
 \* Toggle display between Minutes'Seconds'Frames and Minutes'Seconds''MilliSeconds (press START in the passage screen)  
 \* Timer DOES include lag frames (v1.5 update)  
 \* Insta-death when run out of the frog timer due to coin display replacement  
