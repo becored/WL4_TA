@@ -1,6 +1,6 @@
 // @Description TimeAttack_LevelEndPassagePatch
 // @HookAddress 0x7CABA
-// @HookString 02 48 86 46 02 48 00 47 00 00 CF CA 07 08 P
+// @HookString 0248 86460248 00470000 d3ca0708 P
 // Mode: Thumb
 // Made by beco
 
@@ -9,11 +9,18 @@
 
 // IRAM
 #define sGameSeq (*(volatile unsigned short*) 0x3000C3C)
-#define unk_3003D54 (*(volatile unsigned char*) 0x3003D54)
+#define ucSelectVector (*(volatile unsigned short*) 0x3003C08)
+#define ucSeldemoSeq (*(volatile unsigned char*) 0x3003C39)
+#define usSeldemoCount (*(volatile unsigned short*) 0x3003C3A)
+#define ucSmapWarioStatus (*(volatile unsigned char*) 0x3003CA0)
+#define bSmapBlinkStart (*(volatile unsigned char*) 0x3003D54)
 #define cGmTime1 (*(volatile unsigned short*) 0x3000BF0) // Frog timer seconds' 2nd digit
 #define cGmTime2 (*(volatile unsigned short*) 0x3000BF1) // Frog timer seconds' 1st digit
 #define cGmTime3 (*(volatile unsigned short*) 0x3000BF2) // Frog timer minutes
 
+#define BossLife (*(volatile unsigned char*) 0x3006F0C)
+#define LoadEntityStates (*(volatile unsigned char*) 0x3006F0D) // 0: Not yet, 1: Done
+#define TimeDisplay (*(volatile unsigned char*) 0x3006F0E) // 0: Frame, 1: MSec
 #define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 #define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
@@ -38,19 +45,13 @@
 #define DeltaTime ((volatile unsigned char*) 0x3006F4E) // 4E-54
 
 // Subroutine
-#define sub_807E768 ((void (*)()) 0x807E769)
-#define sub_807E6EC ((void (*)()) 0x807E6ED)
-#define sub_807E720 ((void (*)()) 0x807E721)
-#define sub_807D5C8 ((int (*)()) 0x807D5C9)
+#define Sub_807E768_SmapBlink ((void (*)()) 0x807E769)
+#define Sub_807E6EC_SmapUzuRotate ((void (*)()) 0x807E6ED)
+#define Sub_807E720_SmapColorChange ((void (*)()) 0x807E721)
+#define Sub_807D5C8_SmapStatus ((int (*)()) 0x807D5C9)
+#define Sub_806C304_MapBgm_Pause_FadePause ((void (*)()) 0x806C305)
 
-void TimeAttack_LevelEndPassagePatch() {
-    // Vanilla code
-    if (unk_3003D54) {
-      sub_807E768();
-    }
-    sub_807E6EC();
-    sub_807E720();
-
+int TimeAttack_LevelEndPassagePatch() {
     // Custom code
     if (RetryFlag){
         // Initialize
@@ -67,6 +68,8 @@ void TimeAttack_LevelEndPassagePatch() {
         MiscCounter = 0;
         LockTimer = 0;
         ItemNum = 0;
+        LoadEntityStates = 0;
+        BossLife = 0;
         for (int i = 0; i < 6; i ++) {
             LapTemps1[i] = 0;
         }
@@ -88,6 +91,32 @@ void TimeAttack_LevelEndPassagePatch() {
         cGmTime2 = cGmTimeBackup2;
         cGmTime3 = cGmTimeBackup3;
 
-        sGameSeq = 0x0A; // Return to level
+        sGameSeq = 0xA; // Return to level
+    } else {
+        switch (ucSmapWarioStatus) {
+            case 2:  // Sub_807D964_SmapWarioDrop
+            case 3: // Sub_807DB74_SmapWarioBossDrop
+                /*
+                usSeldemoCount = 0;
+                ucSeldemoSeq = 0;
+                ucSelectVector = 1;
+                */
+                Sub_806C304_MapBgm_Pause_FadePause(); // Remove boss level BGM
+                ucSeldemoSeq = 4;
+                break;
+            case 4: // Sub_807DDCC_SmapWarioOut
+                ucSeldemoSeq = 6;
+                break;
+            default:
+                break;
+        }
     }
+
+    // Vanilla code
+    if (bSmapBlinkStart) {
+      Sub_807E768_SmapBlink();
+    }
+    Sub_807E6EC_SmapUzuRotate();
+    Sub_807E720_SmapColorChange();
+    return Sub_807D5C8_SmapStatus();
 }

@@ -38,13 +38,16 @@ Hook length: 38 Bytes
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
 #define soft_reset (*(volatile unsigned char*) 0x300001E)
+#define CurrentEntityInfoList_TEbuf ((volatile unsigned char*) 0x3000104)
+#define ucBWorks ((volatile unsigned char*) 0x3000A58)
 #define W4ItemStatus ((volatile unsigned char*) 0x3000A68)
 #define inVortex (*(volatile unsigned char*) 0x3000C0E)
 #define GlobalGameMode (*(volatile unsigned char*) 0x3000C3A)
-#define GameState (*(volatile unsigned char*) 0x3000C3C)
+#define sGameSeq (*(volatile unsigned char*) 0x3000C3C)
 #define ucDokan (*(volatile unsigned char*) 0x300189A)
 #define WarioHeart (*(volatile unsigned char*) 0x3001910)
-#define usWarStopFlg (*(volatile unsigned char*) 0x30019F6)
+#define usWarStopFlg (*(volatile unsigned short*) 0x30019F6)
+#define ucTimeUp (*(volatile unsigned char*) 0x3000047) // 01(fighting boss) 02(Losing coins) 03(Losing coins without coin counter) 04(hide coin counter) 10(fade to grayscale) 0f(no interaction between wario and enemies)
 
 #define ADDR_KEY_4 (*(volatile unsigned short*) 0x3001848)
 
@@ -62,6 +65,8 @@ Hook length: 38 Bytes
 #define	KEY_ALL		0x3FF // Any key
 
 // IRAM
+#define LoadEntityStates (*(volatile unsigned char*) 0x3006F0D) // 0: Not yet, 1: Done
+#define TimeDisplay (*(volatile unsigned char*) 0x3006F0E) // 0: Frame, 1: MSec
 #define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 #define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
@@ -73,9 +78,17 @@ Hook length: 38 Bytes
 #define UpdateTime (*(volatile unsigned char*) 0x3006F17)
 #define RetryFlag (*(volatile unsigned char*) 0x3006F18)
 #define MiscCounter (*(volatile unsigned char*) 0x3006F19)
+#define LockTimer (*(volatile unsigned char*) 0x3006F1A)
+#define ItemNum (*(volatile unsigned char*) 0x3006F1B)
 #define cGmTimeBackup1 (*(volatile unsigned char*) 0x3006F20) // Frog timer backup seconds' 2nd digit
 #define cGmTimeBackup2 (*(volatile unsigned char*) 0x3006F21) // Frog timer backup seconds' 1st digit
 #define cGmTimeBackup3 (*(volatile unsigned char*) 0x3006F22) // Frog timer backup minutes
+#define LapTemps1 ((volatile unsigned char*) 0x3006F30) // 30-35
+#define LapTemps2 ((volatile unsigned char*) 0x3006F36) // 36-3B
+#define LapTemps3 ((volatile unsigned char*) 0x3006F3C) // 3C-41
+#define LapTemps4 ((volatile unsigned char*) 0x3006F42) // 42-47
+#define LapTemps5 ((volatile unsigned char*) 0x3006F48) // 48-4D
+#define DeltaTime ((volatile unsigned char*) 0x3006F4E) // 4E-54
 
 // I/O
 #define REG_DMA3SAD (*(volatile unsigned int*) 0x40000D4)
@@ -101,18 +114,18 @@ Hook length: 38 Bytes
 
 void TimeAttack_FrameOperationPatch() {
     // Vanilla code for animated tiles loading
-    if ( (GameState == 2 || GameState == 6 || GameState == 4 && unk_300001B == 1) && !unk_3000046 ) {
+    if ( (sGameSeq == 2 || sGameSeq == 6 || sGameSeq == 4 && unk_300001B == 1) && !unk_3000046 ) {
         sub_806E08C();
     }
 
     // Custom code
     if (InPassageLevelID == 4) {
         // Skip boss corridor
-        if (GlobalGameMode == 2 && GameState == 1 && CurrentRoomId == 0) {
+        if (GlobalGameMode == 2 && sGameSeq == 1 && CurrentRoomId == 0) {
             ucGmapSubSeq = 0x08;
             ucGateNum = 0x02;
             ucSTEndType = 0x80;
-            GameState = 0x06;
+            sGameSeq = 0x06;
         }
         // Skip boss outro
         if (ucSTEndType == 5 && CurrentRoomId == 1) {
@@ -161,10 +174,10 @@ void TimeAttack_FrameOperationPatch() {
     if (cGmStartFlg == 1 && cPauseFlag == 0 && soft_reset == 0) {
         // Press L to trigger debug mode
         if (ADDR_KEY_4 == KEY_L) {
-            if (GameState == 8) {
-                GameState = 2;
-            } else if (GameState == 2) {
-                GameState = 8;
+            if (sGameSeq == 8) {
+                sGameSeq = 2;
+            } else if (sGameSeq == 2) {
+                sGameSeq = 8;
             }
         }
     }

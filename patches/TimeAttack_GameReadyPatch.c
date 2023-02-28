@@ -15,9 +15,9 @@
 #define ucPerfect (*(volatile unsigned char*) 0x3000015)
 #define W4ItemStatus ((volatile unsigned char*) 0x3000A68)
 #define GlobalGameMode (*(volatile unsigned char*) 0x3000C3A)
-#define sGameSeq (*(volatile unsigned short*) 0x3000C3C)
-#define cNextFlg (*(volatile unsigned short*) 0x3000C3E)
-#define cGmStartFlg ((volatile unsigned short*) 0x3000C3F)
+#define sGameSeq (*(volatile signed short*) 0x3000C3C)
+#define cNextFlg (*(volatile signed char*) 0x3000C3E)
+#define cGmStartFlg (*(volatile signed char*) 0x3000C3F)
 #define usFadeTimer (*(volatile unsigned short*) 0x300188E)
 #define sLocalSeq (*(volatile unsigned short*) 0x3002C60)
 #define unk_3003BF8 (*(volatile unsigned char*) 0x3003BF8)
@@ -35,18 +35,24 @@
 #define REG_DMA3CNT (*(volatile unsigned int*) 0x40000DC)
 
 // Subroutine
+#define Sub_8001E70_m4aSongNumStop ((int (*)(int))0x8001E71)
 #define Sub_80917A8_GameReady ((int (*)()) 0x80917A9)
 #define Sub_8090A40_InitSelectSaveSlotScene ((void (*)()) 0x8090A41)
+#define Sub_80914B4_ReadyMain_SaveLoad ((void (*)()) 0x80914B5)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_GameReadyPatch() {
     // Custom code
-    if (sGameSeq == 0) {
-        sGameSeq = 2; // Skip file select screen
-        unk_3004A6C = 1; // Press A
+    // Skip file select screen
+    Sub_8001E70_m4aSongNumStop(636);
+    Sub_80914B4_ReadyMain_SaveLoad();
+    GlobalGameMode = 1;
+    sGameSeq = 38;
+    if (InPassageLevelID == 6){
+      sGameSeq = 0;
     }
 
     // Vanilla code
+    /*
     if (Sub_80917A8_GameReady()) {
       if (cNextFlg == 1) {
         if (ucDisConFlg[0]) {
@@ -72,4 +78,5 @@ void TimeAttack_GameReadyPatch() {
       cNextFlg = 0;
     }
     cGmStartFlg[0] = 0;
+    */
 }

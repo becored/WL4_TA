@@ -709,10 +709,14 @@ struct EnemyDataStructure {
 #define Switch4Flag (*(volatile unsigned char*) 0x3000032)
 #define ucTimeUp (*(volatile unsigned char*) 0x3000047) // 01(fighting boss) 02(Losing coins) 03(Losing coins without coin counter) 04(hide coin counter) 10(fade to grayscale) 0f(no interaction between wario and enemies)
 #define CCobj_ucDat (*(volatile unsigned char*) 0x30000F7)
+#define CurrentEntityInfoList_TEbuf ((volatile unsigned char*) 0x03000104)
 #define CurrentEnemyData (*(volatile struct EnemyDataStructure*) 0x3000A24)
+#define ucBossStartWait (*(volatile unsigned char*) 0x3000A63)
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
 #define usWarStopFlg (*(volatile unsigned short*) 0x30019F6)
+
+#define BossLife (*(volatile unsigned char*) 0x3006F0C)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 
 #define Sub_805DCEC_EntityAI_0x76_Tmain_furawana_uekibachi ((void (*)()) 0x805DCED)
@@ -721,6 +725,7 @@ void TimeAttack_Sub_805DCEC_EntityAI_0x76_Tmain_furawana_uekibachi() {
     // Custom code
     switch (CurrentEnemyData.CurEnemy_CurrentAnimationId) {
         case Q_INITIAL2:
+			// Remove blackout
             if (CCobj_ucDat == 0) {
                 CCobj_ucDat = 0x1F;
             }
@@ -731,6 +736,7 @@ void TimeAttack_Sub_805DCEC_EntityAI_0x76_Tmain_furawana_uekibachi() {
             }
             break;
     }
+
     // Vanilla code
     Sub_805DCEC_EntityAI_0x76_Tmain_furawana_uekibachi();
 }

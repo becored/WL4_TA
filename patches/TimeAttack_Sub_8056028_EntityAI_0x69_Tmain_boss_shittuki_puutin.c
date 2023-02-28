@@ -713,6 +713,7 @@ struct EnemyDataStructure {
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
 #define usWarStopFlg (*(volatile unsigned short*) 0x30019F6)
+
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 
 #define Sub_8000A3C_FixMul ((signed short (*)(signed short, signed short)) 0x8000A3D)
@@ -727,6 +728,7 @@ void TimeAttack_Sub_8056028_EntityAI_0x69_Tmain_boss_shittuki_puutin() {
     // Custom code
     switch (CurrentEnemyData.CurEnemy_CurrentAnimationId) {
         case Q_INITIAL2:
+			// Remove blackout
             if (CCobj_ucDat == 0) {
                 CCobj_ucDat = 0x1F;
             }
@@ -737,6 +739,7 @@ void TimeAttack_Sub_8056028_EntityAI_0x69_Tmain_boss_shittuki_puutin() {
             }
             break;
     }
+
     // Vanilla code
     Sub_8056028_EntityAI_0x69_Tmain_boss_shittuki_puutin();
 }

@@ -33,6 +33,9 @@
 #define cGmTime2 (*(volatile unsigned short*) 0x3000BF1) // Frog timer seconds' 1st digit
 #define cGmTime3 (*(volatile unsigned short*) 0x3000BF2) // Frog timer minutes
 
+#define BossLife (*(volatile unsigned char*) 0x3006F0C)
+#define LoadEntityStates (*(volatile unsigned char*) 0x3006F0D) // 0: Not yet, 1: Done
+#define TimeDisplay (*(volatile unsigned char*) 0x3006F0E) // 0: Frame, 1: MSec
 #define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 #define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
@@ -95,6 +98,7 @@
 
 // SRAM
 #define LastDifficulty (*(volatile unsigned char*) 0xE0009F0)
+#define LastTimeDisplay (*(volatile unsigned char*) 0xE0009F1)
 #define BestTimes ((volatile unsigned char*) 0xE000A00)
 #define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 #define LapTimes ((volatile unsigned char*) 0xE000C10)
@@ -109,8 +113,21 @@
 #define ITEM_CHAR 0x87A0800
 #define ITEM_NUM_CHAR 0x87A0880
 #define APO_CHAR 0x869F888
+#define MSC_CHAR 0x869EC88
 #define NUM_CHAR 0x869FC88
 #define BLK_CHAR 0x869EE68
+
+const char MSecTableDigit1[60] =
+{
+    0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,
+    0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,
+};
+
+const char MSecTableDigit2[60] =
+{
+    0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,
+    5,5,5,5,5,5,6,6,6,6,6,6,7,7,7,7,7,7,8,8,8,8,8,8,9,9,9,9,9,9,
+};
 
 void TimeAttack_GameSelectMmapPatch() {
     // Vanilla code
@@ -119,7 +136,8 @@ void TimeAttack_GameSelectMmapPatch() {
     }
 
     // Custom code
-    // Initialize timer
+    int i;
+    // Initialize stuff
     MaxFlag = 0;
     CountFlag = 0;
     FrameDigit1 = 0;
@@ -132,6 +150,8 @@ void TimeAttack_GameSelectMmapPatch() {
     MiscCounter = 0;
     LockTimer = 0;
     ItemNum = 0;
+    LoadEntityStates = 0;
+    BossLife = 0;
     for (int i = 0; i < 6; i ++) {
         LapTemps1[i] = 0;
     }
@@ -174,6 +194,21 @@ void TimeAttack_GameSelectMmapPatch() {
         LastDifficulty = CurrentDifficulty;
     }
 
+    // Load Last TimeDisplay
+    if (TimeDisplay != LastTimeDisplay) {
+        TimeDisplay = LastTimeDisplay;
+    }
+
+    // TimeDisplay select
+    if (ADDR_KEY_4 == KEY_START) {
+        TimeDisplay ++;
+        if (TimeDisplay > 1) {
+            TimeDisplay = 0;
+        }
+        sub_8001DA4_m4aSongNumStart(288);
+        LastTimeDisplay = TimeDisplay;
+    }
+
     // Difficulty VRAM
     if (CurrentDifficulty == 1) {
         REG_DMA3SAD = BLK_CHAR;
@@ -213,12 +248,9 @@ void TimeAttack_GameSelectMmapPatch() {
     // Best time VRAM
     if (InPassageLevelID == 4) {
         // Boss
-        int i = (PassageID * 6) + (CurrentDifficulty * 36);
+        i = (PassageID * 6) + (CurrentDifficulty * 36);
         // Hidden best time
-        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5 ||
-            (BestTimes_Boss[i] == 0 && BestTimes_Boss[i+1] == 0 &&
-            BestTimes_Boss[i+2] == 0 && BestTimes_Boss[i+3] == 0 &&
-            BestTimes_Boss[i+4] == 0 && BestTimes_Boss[i+5] == 0)) {
+        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5) {
             for (int i = 0; i < 6; i ++) {
                 REG_DMA3SAD = BLK_CHAR;
                 REG_DMA3DAD = (VRAM + 0x26A0 + (i * 0x20));
@@ -234,14 +266,25 @@ void TimeAttack_GameSelectMmapPatch() {
             REG_DMA3CNT = 0x80000050;
         // Visible best time
         } else {
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2740);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2720);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[BestTimes_Boss[i+1]*10 + BestTimes_Boss[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2740);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[BestTimes_Boss[i+1]*10 + BestTimes_Boss[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2720);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2740);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (BestTimes_Boss[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2720);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (BestTimes_Boss[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x2700);
@@ -261,12 +304,9 @@ void TimeAttack_GameSelectMmapPatch() {
         }
     } else {
         // Level
-        int i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
+        i = (PassageID * 24) + (InPassageLevelID * 6) + (CurrentDifficulty * 144);
         // Hidden best time
-        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5 ||
-            (BestTimes[i] == 0 && BestTimes[i+1] == 0 &&
-            BestTimes[i+2] == 0 && BestTimes[i+3] == 0 &&
-            BestTimes[i+4] == 0 && BestTimes[i+5] == 0)) {
+        if (ucSelectVector[0] == 1 || ucSelectVector[0] == 3 || bSelIdoFlg == 1 || InPassageLevelID == 5) {
             for (int i = 0; i < 6; i ++) {
                 // Total Time
                 REG_DMA3SAD = BLK_CHAR;
@@ -297,14 +337,25 @@ void TimeAttack_GameSelectMmapPatch() {
         // Visible best time
         } else {
             // Total Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2740);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2720);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[BestTimes[i+1]*10 + BestTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2740);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[BestTimes[i+1]*10 + BestTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2720);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (BestTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2740);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (BestTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2720);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (BestTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x2700);
@@ -332,14 +383,25 @@ void TimeAttack_GameSelectMmapPatch() {
             REG_DMA3CNT = 0x80000050;
             int i = (InPassageLevelID * 30) + (PassageID * 120) + (CurrentDifficulty * 720);
             // Item 1 Lap Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x21E0);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x21C0);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x21E0);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x21C0);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x21E0);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x21C0);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (LapTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x21A0);
@@ -359,14 +421,25 @@ void TimeAttack_GameSelectMmapPatch() {
 
             i += 6;
             // Item 2 Lap Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x25E0);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x25C0);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x25E0);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x25C0);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x25E0);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x25C0);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (LapTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x25A0);
@@ -386,14 +459,25 @@ void TimeAttack_GameSelectMmapPatch() {
 
             i += 6;
             // Item 3 Lap Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x22A0);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2280);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x22A0);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2280);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x22A0);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2280);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (LapTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x2260);
@@ -413,14 +497,25 @@ void TimeAttack_GameSelectMmapPatch() {
 
             i += 6;
             // Item 4 Lap Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x28A0);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2880);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x28A0);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2880);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x28A0);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2880);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (LapTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x2860);
@@ -440,14 +535,25 @@ void TimeAttack_GameSelectMmapPatch() {
 
             i += 6;
             // Item 5 Lap Time
-            // Frames 1-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2CA0);
-            REG_DMA3CNT = 0x80000010;
-            // Frames 2-digit
-            REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
-            REG_DMA3DAD = (VRAM + 0x2C80);
-            REG_DMA3CNT = 0x80000010;
+            if ( TimeDisplay ) {
+                // MSec 1-digit
+                REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2CA0);
+                REG_DMA3CNT = 0x80000010;
+                // MSec 2-digit
+                REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[LapTimes[i+1]*10 + LapTimes[i]] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2C80);
+                REG_DMA3CNT = 0x80000010;
+            } else {
+                // Frames 1-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2CA0);
+                REG_DMA3CNT = 0x80000010;
+                // Frames 2-digit
+                REG_DMA3SAD = NUM_CHAR + (LapTimes[i+1] * 0x20);
+                REG_DMA3DAD = (VRAM + 0x2C80);
+                REG_DMA3CNT = 0x80000010;
+            }
             // Seconds 1-digit
             REG_DMA3SAD = APO_CHAR + (LapTimes[i+2] * 0x20);
             REG_DMA3DAD = (VRAM + 0x2C60);

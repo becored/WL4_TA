@@ -21,6 +21,9 @@
 #define inVortex (*(volatile unsigned char*) 0x3000C0E)
 #define usWarStopFlg (*(volatile unsigned char*) 0x30019F6)
 
+#define BossLife (*(volatile unsigned char*) 0x3006F0C)
+#define LoadEntityStates (*(volatile unsigned char*) 0x3006F0D) // 0: Not yet, 1: Done
+#define TimeDisplay (*(volatile unsigned char*) 0x3006F0E) // 0: Frame, 1: MSec
 #define MaxFlag (*(volatile unsigned char*) 0x3006F0F)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 #define FrameDigit1 (*(volatile unsigned char*) 0x3006F11)
@@ -58,11 +61,25 @@
 
 // Char
 #define APO_CHAR 0x8401CE8
+#define MSC_CHAR 0x8409EE8
 #define NUM_CHAR 0x8403AE8
 #define BLK_CHAR 0x8400E28
 #define B_APO_CHAR 0x84024C8
+#define B_MSC_CHAR 0x8409CE8
 #define B_NUM_CHAR 0x84020C8
 #define B_CLK_CHAR 0x8401448
+
+const char MSecTableDigit1[60] =
+{
+    0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,
+    0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,0,1,3,5,6,8,
+};
+
+const char MSecTableDigit2[60] =
+{
+    0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,
+    5,5,5,5,5,5,6,6,6,6,6,6,7,7,7,7,7,7,8,8,8,8,8,8,9,9,9,9,9,9,
+};
 
 void TimeAttack_MainGameLoopPatch() {
     // Vanilla code
@@ -72,40 +89,6 @@ void TimeAttack_MainGameLoopPatch() {
     ++usRandomCount;
 
     // Custom code
-    // Frame counter
-    if (CountFlag == 1 && MaxFlag == 0) {
-        FrameDigit1 ++;
-        if (FrameDigit1 > 9) {
-            FrameDigit2 ++;
-            FrameDigit1 = 0;
-        }
-        if (FrameDigit2 > 5) {
-            SecondDidit1 ++;
-            FrameDigit2 = 0;
-        }
-        if (SecondDidit1 > 9) {
-            SecondDidit2 ++;
-            SecondDidit1 = 0;
-        }
-        if (SecondDidit2 > 5) {
-            MinuteDidit1 ++;
-            SecondDidit2 = 0;
-        }
-        if (MinuteDidit1 > 9) {
-            MinuteDidit2 ++;
-            MinuteDidit1 = 0;
-        }
-        if (MinuteDidit2 > 9) {
-            FrameDigit1 = 9;
-            FrameDigit2 = 9;
-            SecondDidit1 = 9;
-            SecondDidit2 = 5;
-            MinuteDidit1 = 9;
-            MinuteDidit2 = 9;
-            MaxFlag = 1;
-        }
-    }
-
     if (UpdateTime > 0) {
         if (++MiscCounter >= 8) {
             if (--UpdateTime == 0) {
@@ -120,14 +103,25 @@ void TimeAttack_MainGameLoopPatch() {
 
     // Pause menu
     if (GlobalGameMode == 4) {
-        // Frames 1-digit
-        REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x11120);
-        REG_DMA3CNT = 0x80000010;
-        // Frames 2-digit
-        REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
-        REG_DMA3DAD = (VRAM + 0x11100);
-        REG_DMA3CNT = 0x80000010;
+        if ( TimeDisplay ) {
+            // MSec 1-digit
+            REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[FrameDigit2*10 + FrameDigit1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x11120);
+            REG_DMA3CNT = 0x80000010;
+            // MSec 2-digit
+            REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[FrameDigit2*10 + FrameDigit1] * 0x20);
+            REG_DMA3DAD = (VRAM + 0x11100);
+            REG_DMA3CNT = 0x80000010;
+        } else {
+            // Frames 1-digit
+            REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
+            REG_DMA3DAD = (VRAM + 0x11120);
+            REG_DMA3CNT = 0x80000010;
+            // Frames 2-digit
+            REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
+            REG_DMA3DAD = (VRAM + 0x11100);
+            REG_DMA3CNT = 0x80000010;
+        }
         // Seconds 1-digit
         REG_DMA3SAD = APO_CHAR + (SecondDidit1 * 0x20);
         REG_DMA3DAD = (VRAM + 0x110E0);
@@ -156,14 +150,25 @@ void TimeAttack_MainGameLoopPatch() {
                 REG_DMA3SAD = BLK_CHAR;
                 REG_DMA3DAD = (VRAM + 0x116E0);
                 REG_DMA3CNT = 0x80000010;
-                // Frames 1-digit
-                REG_DMA3SAD = B_NUM_CHAR + (FrameDigit1 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x116C0);
-                REG_DMA3CNT = 0x80000010;
-                // Frames 2-digit
-                REG_DMA3SAD = B_NUM_CHAR + (FrameDigit2 * 0x20);
-                REG_DMA3DAD = (VRAM + 0x116A0);
-                REG_DMA3CNT = 0x80000010;
+                if ( TimeDisplay ) {
+                    // MSec 1-digit
+                    REG_DMA3SAD = B_NUM_CHAR + (MSecTableDigit1[FrameDigit2*10 + FrameDigit1] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x116C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // MSec 2-digit
+                    REG_DMA3SAD = B_MSC_CHAR + (MSecTableDigit2[FrameDigit2*10 + FrameDigit1] * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x116A0);
+                    REG_DMA3CNT = 0x80000010;
+                } else {
+                    // Frames 1-digit
+                    REG_DMA3SAD = B_NUM_CHAR + (FrameDigit1 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x116C0);
+                    REG_DMA3CNT = 0x80000010;
+                    // Frames 2-digit
+                    REG_DMA3SAD = B_NUM_CHAR + (FrameDigit2 * 0x20);
+                    REG_DMA3DAD = (VRAM + 0x116A0);
+                    REG_DMA3CNT = 0x80000010;
+                }
                 // Seconds 1-digit
                 REG_DMA3SAD = B_APO_CHAR + (SecondDidit1 * 0x20);
                 REG_DMA3DAD = (VRAM + 0x11680);
@@ -212,14 +217,25 @@ void TimeAttack_MainGameLoopPatch() {
             // Level
             if (LockTimer == 0) {
                 if (UpdateTime % 2 == 0) {
-                    // Frames 1-digit
-                    REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
-                    REG_DMA3DAD = (VRAM + 0x11120);
-                    REG_DMA3CNT = 0x80000010;
-                    // Frames 2-digit
-                    REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
-                    REG_DMA3DAD = (VRAM + 0x11100);
-                    REG_DMA3CNT = 0x80000010;
+                    if ( TimeDisplay ) {
+                        // MSec 1-digit
+                        REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[FrameDigit2*10 + FrameDigit1] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11120);
+                        REG_DMA3CNT = 0x80000010;
+                        // MSec 2-digit
+                        REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[FrameDigit2*10 + FrameDigit1] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11100);
+                        REG_DMA3CNT = 0x80000010;
+                    } else {
+                        // Frames 1-digit
+                        REG_DMA3SAD = NUM_CHAR + (FrameDigit1 * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11120);
+                        REG_DMA3CNT = 0x80000010;
+                        // Frames 2-digit
+                        REG_DMA3SAD = NUM_CHAR + (FrameDigit2 * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11100);
+                        REG_DMA3CNT = 0x80000010;
+                    }
                     // Seconds 1-digit
                     REG_DMA3SAD = APO_CHAR + (SecondDidit1 * 0x20);
                     REG_DMA3DAD = (VRAM + 0x110E0);
@@ -259,14 +275,25 @@ void TimeAttack_MainGameLoopPatch() {
                 }
             } else {
                 if (UpdateTime % 2 == 0) {
-                    // Frames 1-digit
-                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[0] * 0x20);
-                    REG_DMA3DAD = (VRAM + 0x11120);
-                    REG_DMA3CNT = 0x80000010;
-                    // Frames 2-digit
-                    REG_DMA3SAD = NUM_CHAR + (DeltaTime[1] * 0x20);
-                    REG_DMA3DAD = (VRAM + 0x11100);
-                    REG_DMA3CNT = 0x80000010;
+                    if ( TimeDisplay ) {
+                        // MSec 1-digit
+                        REG_DMA3SAD = NUM_CHAR + (MSecTableDigit1[DeltaTime[1]*10 + DeltaTime[0]] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11120);
+                        REG_DMA3CNT = 0x80000010;
+                        // MSec 2-digit
+                        REG_DMA3SAD = MSC_CHAR + (MSecTableDigit2[DeltaTime[1]*10 + DeltaTime[0]] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11100);
+                        REG_DMA3CNT = 0x80000010;
+                    } else {
+                        // Frames 1-digit
+                        REG_DMA3SAD = NUM_CHAR + (DeltaTime[0] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11120);
+                        REG_DMA3CNT = 0x80000010;
+                        // Frames 2-digit
+                        REG_DMA3SAD = NUM_CHAR + (DeltaTime[1] * 0x20);
+                        REG_DMA3DAD = (VRAM + 0x11100);
+                        REG_DMA3CNT = 0x80000010;
+                    }
                     // Seconds 1-digit
                     REG_DMA3SAD = APO_CHAR + (DeltaTime[2] * 0x20);
                     REG_DMA3DAD = (VRAM + 0x110E0);
@@ -283,7 +310,7 @@ void TimeAttack_MainGameLoopPatch() {
                     REG_DMA3SAD = NUM_CHAR + (DeltaTime[5] * 0x20);
                     REG_DMA3DAD = (VRAM + 0x11080);
                     REG_DMA3CNT = 0x80000010;
-                } else {
+                } else { // Blink timer when ahead
                     // Frames 1-digit
                     REG_DMA3SAD = BLK_CHAR;
                     REG_DMA3DAD = (VRAM + 0x11120);

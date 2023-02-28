@@ -722,6 +722,8 @@ struct EnemyDataStructure {
 #define cGmStartFlg (*(volatile unsigned char*) 0x3000C3F)
 #define cPauseFlag (*(volatile unsigned char*) 0x3000C35)
 #define usWarStopFlg (*(volatile unsigned short*) 0x30019F6)
+
+#define BossLife (*(volatile unsigned char*) 0x3006F0C)
 #define CountFlag (*(volatile unsigned char*) 0x3006F10)
 
 #define Sub_8000A3C_FixMul ((signed short (*)(signed short, signed short)) 0x8000A3D)
@@ -739,17 +741,17 @@ void TimeAttack_Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face() {
             CurrentEnemyData.CurEnemy_YPos = 0x04E0; // diva y position
             ucBgDiva = 0x03; // light ray fix
             unk_3000104 = 0x00; // post cat scene state
-            /*
             unk_3000160 = 0xF4; // fan hand fix 1
             unk_3000161 = 0xF2; // fan hand fix 2
             unk_3000188 = 0x1B; // fan fix
             unk_3000A64 = 0xBF; // fast heads
-            */
             CurrentEnemyData.CurEnemy_TWork0 = 0x01;
+			/*
             CurrentEnemyData.CurEnemy_TWork1 = 0x0C;
             CurrentEnemyData.CurEnemy_TWork2 = 0x04;
             CurrentEnemyData.CurEnemy_TWork3 = 0x04;
-            CurrentEnemyData.CurEnemy_CurrentAnimationId = T_AUX_1;
+			*/
+            CurrentEnemyData.CurEnemy_CurrentAnimationId = Q_T_AUX_2;
             break;
         default:
             if (!usWarStopFlg && ucTimeUp == 1 && CurrentEnemyData.CurEnemy_Life > 0 && CountFlag == 0){
@@ -757,6 +759,8 @@ void TimeAttack_Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face() {
             }
             break;
     }
+	BossLife = CurrentEnemyData.CurEnemy_Life;
+	
     // Vanilla code
     Sub_8067A64_EntityAI_0xEC_Tmain_mouja_face();
 }

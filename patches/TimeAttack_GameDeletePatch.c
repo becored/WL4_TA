@@ -23,7 +23,6 @@
 #define BestTimes_Boss ((volatile unsigned char*) 0xE000BA0)
 #define LapTimes ((volatile unsigned char*) 0xE000C10)
 
-__attribute__((no_caller_saved_registers))
 void TimeAttack_GameDeletePatch() {
     // Vanilla code
     cNextFlg = sub_80928E4();
